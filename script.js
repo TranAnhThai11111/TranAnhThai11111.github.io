@@ -8,30 +8,42 @@ const temperatureElement = document.getElementById('temperature');
 const descriptionElement = document.getElementById('description');
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                fetchWeatherByCoords(
-                    position.coords.latitude,
-                    position.coords.longitude
-                );
-            },
-            () => {
-                fetchWeather('Hanoi');
-            }
-        );
-    } else {
-        fetchWeather('Hanoi');
+    getCurrentLocationWeather();
+});
+
+searchButton.addEventListener('click', searchWeather);
+
+locationInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+        searchWeather();
     }
 });
 
-searchButton.addEventListener('click', () => {
+function searchWeather() {
     const location = locationInput.value.trim();
 
-    if (location) {
-        fetchWeather(location);
+    if (location !== '') {
+        fetchWeatherByCity(location);
     }
-});
+}
+
+function getCurrentLocationWeather() {
+    if (!navigator.geolocation) {
+        fetchWeatherByCity('Hanoi');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            fetchWeatherByCoords(lat, lon);
+        },
+        () => {
+            fetchWeatherByCity('Hanoi');
+        }
+    );
+}
 
 function displayWeather(data) {
     locationElement.textContent = data.name;
@@ -39,23 +51,27 @@ function displayWeather(data) {
     descriptionElement.textContent = data.weather[0].description;
 }
 
-function fetchWeather(location) {
-    const url = `${apiUrl}?q=${location}&appid=${apiKey}&units=metric`;
+function showError(message) {
+    locationElement.textContent = message;
+    temperatureElement.textContent = '';
+    descriptionElement.textContent = '';
+}
+
+function fetchWeatherByCity(city) {
+    const url = `${apiUrl}?q=${city}&appid=${apiKey}&units=metric`;
 
     fetch(url)
         .then(response => response.json())
         .then(data => {
-            if (data.cod !== 200) {
-                locationElement.textContent = 'City not found';
-                temperatureElement.textContent = '';
-                descriptionElement.textContent = '';
+            if (data.cod != 200) {
+                showError('City not found');
                 return;
             }
 
             displayWeather(data);
         })
-        .catch(error => {
-            console.error('Error fetching weather data:', error);
+        .catch(() => {
+            showError('Failed to load weather');
         });
 }
 
@@ -67,7 +83,7 @@ function fetchWeatherByCoords(lat, lon) {
         .then(data => {
             displayWeather(data);
         })
-        .catch(error => {
-            console.error('Error fetching weather data:', error);
+        .catch(() => {
+            showError('Failed to load weather');
         });
 }
