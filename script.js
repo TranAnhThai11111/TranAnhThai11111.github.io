@@ -8,29 +8,66 @@ const temperatureElement = document.getElementById('temperature');
 const descriptionElement = document.getElementById('description');
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchWeather('Hanoi');
-}); 
-searchButton.addEventListener('click', () => {
-    const location = locationInput.value;
-    if (location) {
-        fetchWeather(location);
-    }
-    else {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                fetchWeatherByCoords(
+                    position.coords.latitude,
+                    position.coords.longitude
+                );
+            },
+            () => {
+                fetchWeather('Hanoi');
+            }
+        );
+    } else {
         fetchWeather('Hanoi');
     }
 });
 
+searchButton.addEventListener('click', () => {
+    const location = locationInput.value.trim();
+
+    if (location) {
+        fetchWeather(location);
+    }
+});
+
+function displayWeather(data) {
+    locationElement.textContent = data.name;
+    temperatureElement.textContent = `${Math.round(data.main.temp)}°C`;
+    descriptionElement.textContent = data.weather[0].description;
+}
+
 function fetchWeather(location) {
     const url = `${apiUrl}?q=${location}&appid=${apiKey}&units=metric`;
+
     fetch(url)
         .then(response => response.json())
         .then(data => {
-            locationElement.textContent = data.name;
-            temperatureElement.textContent = `${Math.round(data.main.temp)}°C`;
-            descriptionElement.textContent = data.weather[0].description;
+            if (data.cod !== 200) {
+                locationElement.textContent = 'City not found';
+                temperatureElement.textContent = '';
+                descriptionElement.textContent = '';
+                return;
+            }
+
+            displayWeather(data);
         })
-        .catch(error => 
-            {
+        .catch(error => {
+            console.error('Error fetching weather data:', error);
+        });
+}
+
+function fetchWeatherByCoords(lat, lon) {
+    const url = `${apiUrl}?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            displayWeather(data);
+        })
+        .catch(error => {
             console.error('Error fetching weather data:', error);
         });
 }
