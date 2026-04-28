@@ -3,7 +3,6 @@ const apiUrl = 'https://api.openweathermap.org/data/2.5/weather';
 
 const locationInput = document.getElementById('locationInput');
 const searchButton = document.getElementById('searchButton');
-const locationElement = document.getElementById('location');
 const temperatureElement = document.getElementById('temperature');
 const descriptionElement = document.getElementById('description');
 
@@ -46,13 +45,11 @@ function getCurrentLocationWeather() {
 }
 
 function displayWeather(data) {
-    locationElement.textContent = data.name;
     temperatureElement.textContent = `${Math.round(data.main.temp)}°C`;
     descriptionElement.textContent = data.weather[0].description;
 }
 
 function showError(message) {
-    locationElement.textContent = message;
     temperatureElement.textContent = '';
     descriptionElement.textContent = '';
 }
